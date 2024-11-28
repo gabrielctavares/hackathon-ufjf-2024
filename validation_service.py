@@ -95,12 +95,10 @@ def detect_anomalies_with_prediction(data, new_entry):
 
         contamination = len(data[data["anomalia"] == True]) / len(data)
         contamination = min(max(contamination, 0.005), 0.5)  
-
-        print(f"Contaminação: {contamination}")
-
+        contamination = round(contamination, 3)
+        
         isolation_model = IsolationForest(contamination=contamination, random_state=42)
         isolation_model.fit(X)
-        print("Passou aqui 1")
         anomaly_score = isolation_model.decision_function(new_entry_encoded)
         is_anomaly = anomaly_score[0] < 0  
         return is_anomaly
