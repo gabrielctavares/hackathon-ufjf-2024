@@ -118,7 +118,7 @@ def show_graph(data):
                 selected_row["producao_kg"] = new_value
 
                 if st.button("Salvar Correção"):               
-                    update_row(selected_row)
+                    update_data(pd.DataFrame([selected_row]))
                 
     
     

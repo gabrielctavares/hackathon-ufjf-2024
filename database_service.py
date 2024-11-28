@@ -7,13 +7,10 @@ from sqlalchemy.sql import text
 from validation_service import validate_and_suggest
 
 
-# Configurar banco de dados SQLite
 DATABASE_URL = "sqlite:///lactacao.db"
 engine = create_engine(DATABASE_URL)
 metadata = MetaData()
 
-
-# Tabela no banco de dados
 lactacao_table = Table(
     "lactacao",
     metadata,
@@ -27,7 +24,6 @@ lactacao_table = Table(
 
 metadata.create_all(engine)
 
-# Function to load defaults into the database
 @st.cache_data
 def load_defaults(file_path):
     with engine.connect() as conn:
@@ -40,13 +36,9 @@ def load_defaults(file_path):
             conn.commit()
             st.success("Base de conhecimento carregada com sucesso!")
 
-file_path = 'Lactacao (2).csv'
-# Call the load_defaults function on app startup
+file_path = 'Lactacao.csv'
 load_defaults(file_path)
 
-
-
-# Função para carregar dados do banco
 def load_data():
     try: 
         with engine.connect() as conn:
@@ -54,12 +46,12 @@ def load_data():
     except SQLAlchemyError as e:
         st.error(f"Erro ao buscar dados: {e}")
 
-def update_data(updated_data):
+def update_data(updated_data: pd.DataFrame):
     try:
-        # Save the changes to the database
+        
+        validated_data = validate_data(updated_data)
         with engine.connect() as conn:
-            for _, row in updated_data.iterrows():                
-                row = validate_data(row)
+            for _, row in validated_data.iterrows():                
                 stmt = (
                     update(lactacao_table)
                     .where(lactacao_table.c.id == row["id"]) 
@@ -99,7 +91,7 @@ def update_row(row):
     except Exception as e:
         st.error(f"Erro ao salvar alterações: {e}")
 
-def save_data(data):    
+def save_data(data: pd.DataFrame):    
     try:
         if isinstance(data, pd.DataFrame):
             validated_data = validate_data(data)
@@ -117,7 +109,7 @@ def save_data(data):
     except SQLAlchemyError as e:
         st.error(f"Erro ao salvar dados: {e}")
 
-def validate_data(data):
+def validate_data(data: pd.DataFrame):
     if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame([data])
 
