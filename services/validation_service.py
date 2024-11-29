@@ -8,25 +8,25 @@ def detect_anomalies_with_prediction(data, new_entry, config):
     
     auxiliary_variables = config.get("auxiliary_variables", [])
     analysis_variable = config["analysis_variable"]
-
+    series_column = config["series_column"]
 
     categorical_columns = data[auxiliary_variables].select_dtypes(include=["object", "category"]).columns.tolist() # Valores que precisam ser codificados
 
-    contamination = config.get("contamination", len(data[data["anomalia"] == True]) / len(data))
+
+    contamination = config.get("contamination", 0.005)
     contamination = round(min(max(contamination, 0.005), 0.5), 3)  
 
     data_encoded = data[data["anomalia"] == False]
     data_encoded = pd.get_dummies(data_encoded, columns=categorical_columns, drop_first=False)
     new_entry_encoded = pd.get_dummies(new_entry, columns=categorical_columns, drop_first=False)
 
-    
 
     for col in data_encoded.columns:
         if col not in new_entry_encoded.columns:
             new_entry_encoded[col] = 0
 
     dummy_columns = [col for col in data_encoded.columns if col.startswith(tuple(categorical_columns))]
-    features = auxiliary_variables + dummy_columns
+    features = [series_column] + auxiliary_variables + dummy_columns
 
     def detect_anomalies(data_encoded, new_entry_encoded):
         anomaly_features = features + [analysis_variable] 

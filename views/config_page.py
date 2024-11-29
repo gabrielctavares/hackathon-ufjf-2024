@@ -117,9 +117,8 @@ def register_serie():
                 st.session_state["config"] = config
                 save_configuration(config)
                 
-                create_dynamic_table(dynamic_table_name, data)
+                create_dynamic_table(dynamic_table_name, data)                
                 save_data(dynamic_table_name, data, config)
-
                 st.success("Configurações salvas com sucesso!")
 
         except Exception as e:
