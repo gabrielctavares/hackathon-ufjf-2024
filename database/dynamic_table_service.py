@@ -52,7 +52,14 @@ def update_data(table_name: str, dataframe: pd.DataFrame, config: dict):
     dynamic_table = Table(table_name, metadata, autoload_with=engine)
     
     with engine.connect() as conn:
-        conn.execute(dynamic_table.update(), validated_data.to_dict(orient="records"))
+        for _, row in validated_data.iterrows():
+            update_values = {col: row[col] for col in validated_data.columns if col != "id"}            
+            stmt = (
+                dynamic_table.update()
+                .where(dynamic_table.c.id == row["id"])  
+                .values(**update_values)  
+            )
+            conn.execute(stmt)
         conn.commit()
 
 def validate_data(data: pd.DataFrame, table_name: str, config: dict):

@@ -5,32 +5,37 @@ from sklearn.ensemble import IsolationForest
 
 
 def detect_anomalies_with_prediction(data, new_entry, config):
-    
+
+    # Se não houver dados, não é possível fazer a detecção de anomalias
+    if data.empty:
+        return False, None
+        
     auxiliary_variables = config.get("auxiliary_variables", [])
     analysis_variable = config["analysis_variable"]
     series_column = config["series_column"]
 
-    categorical_columns = data[auxiliary_variables].select_dtypes(include=["object", "category"]).columns.tolist() # Valores que precisam ser codificados
-
+    categorical_columns = data[auxiliary_variables].select_dtypes(include=["object", "category"]).columns.tolist()
 
     contamination = config.get("contamination", 0.005)
     contamination = round(min(max(contamination, 0.005), 0.5), 3)  
 
-    data_encoded = data[data["anomalia"] == False]
+    data_encoded = data[data["anomalia"] == False]   
+
     data_encoded = pd.get_dummies(data_encoded, columns=categorical_columns, drop_first=False)
     new_entry_encoded = pd.get_dummies(new_entry, columns=categorical_columns, drop_first=False)
 
 
-    for col in data_encoded.columns:
-        if col not in new_entry_encoded.columns:
-            new_entry_encoded[col] = 0
+    combined_columns = list(set(data_encoded.columns).union(set(new_entry_encoded.columns)))
+    data_encoded = data_encoded.reindex(columns=combined_columns, fill_value=0)
+    new_entry_encoded = new_entry_encoded.reindex(columns=combined_columns, fill_value=0)
 
     dummy_columns = [col for col in data_encoded.columns if col.startswith(tuple(categorical_columns))]
-    features = [series_column] + auxiliary_variables + dummy_columns
+    auxiliary_variables = [col for col in auxiliary_variables if col not in categorical_columns]
+
+    features =  [series_column] +  auxiliary_variables + dummy_columns
 
     def detect_anomalies(data_encoded, new_entry_encoded):
-        anomaly_features = features + [analysis_variable] 
-        
+        anomaly_features = features + [analysis_variable]         
         if not all(field in data_encoded.columns for field in anomaly_features):
             raise ValueError("Dados incompletos para a detecção de anomalias.")
 
@@ -117,11 +122,15 @@ def validate_and_suggest(data, new_entries: pd.DataFrame, config: dict):
         anomalias.append(is_anomaly)
         correcao_sugerida.append(suggested_value if is_anomaly else None)
 
-        print(f"Validado: {is_valid}, Validado por IA: {not is_anomaly_ia}")
+        if not is_anomaly:
+            validated_row = row.copy()
+            validated_row["id"] = data["id"].max() + 1
+            validated_row["anomalia"] = False
+            validated_row["correcao_sugerida"] = None
+            data = pd.concat([data, pd.DataFrame([validated_row])], ignore_index=True)
 
-        is_anomaly = not is_valid or is_anomaly_ia
-        anomalias.append(is_anomaly)
-        correcao_sugerida.append(suggested_value if is_anomaly else None)
+
+        print(f"Validado: {is_valid}, Validado por IA: {not is_anomaly_ia}")
 
     new_entries["anomalia"] = anomalias
     new_entries["correcao_sugerida"] = correcao_sugerida

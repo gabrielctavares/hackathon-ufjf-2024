@@ -23,6 +23,7 @@ def show_visualization():
         st.warning("Nenhum dado cadastrado ainda com os filtros aplicados.")
     else:
         show_grid(filtered_data, config)
+        st.divider()
         show_graph(filtered_data, config)
 
 
@@ -91,7 +92,7 @@ def show_grid(data, config):
         st.warning("Alterações detectadas. Clique em 'Salvar Alterações' para confirmar.")
         if st.button("Salvar Alterações"):
             altered_rows = updated_data.loc[changes_detected.index]
-            update_data(config["dynamic_table_name"], altered_rows)
+            update_data(config["dynamic_table_name"], altered_rows, config)
 
 
 def show_graph(data, config):
@@ -164,5 +165,5 @@ def show_graph(data, config):
             if st.button("Salvar Correção"):
                 selected_row = selected_row.to_dict()  
                 selected_row[analysis_variable] = new_value                
-                update_data(config["dynamic_table_name"], pd.DataFrame([selected_row]))
+                update_data(config["dynamic_table_name"], pd.DataFrame([selected_row]), config)
                 st.success(f"Correção do ID {selected_id} salva com sucesso!")

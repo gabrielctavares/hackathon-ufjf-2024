@@ -1,8 +1,6 @@
-# configuration_service.py
 from sqlalchemy import Float, Table, Column, Integer, String, JSON, insert, select
 from database.database_config import metadata, engine
 
-# Tabela de Configurações
 configuracoes_table = Table(
     "configuracoes_serie",
     metadata,
@@ -30,6 +28,22 @@ def save_configuration(config):
     except Exception as e:        
         conn.rollback()
         return False
+
+def update_configuration(nome_serie, config):
+    try:
+        with engine.connect() as conn:
+            stmt = (
+                configuracoes_table.update()
+                .where(configuracoes_table.c.nome_serie == nome_serie)
+                .values(config)
+            )
+            conn.execute(stmt)
+            conn.commit()
+            return True
+    except Exception as e:
+        conn.rollback()
+        return False
+
 
 def get_configuration(nome_serie):
     with engine.connect() as conn:

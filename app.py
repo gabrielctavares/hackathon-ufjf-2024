@@ -5,7 +5,6 @@ from views.visualization_page import show_visualization
 
 initialize_series_configurations()
 
-# Continuar com o restante do app
 if st.session_state["config"]:
     st.sidebar.write(f"Série Ativa: {st.session_state['config']['nome_serie']}")
 else:
